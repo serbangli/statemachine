@@ -30,6 +30,7 @@
         </condition>
     </transition>
     
+    <transition id="t21" name="t21" source="PENDING_APPROVAL" destination="EDITORIAL_REVIEW"/>
 
     <transition id="t3" name="t3" source="EDITORIAL_REVIEW" destination="FINAL_APPROVAL"/>
 
