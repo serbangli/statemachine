@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Machine Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔄 State Machine Manager</h1>
+            <p>Manage and execute state machine instances</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Machine Definitions Section -->
+            <section class="card">
+                <h2>Machine Definitions</h2>
+                <div class="form-group">
+                    <label for="loadDefinitionFile">Load from File:</label>
+                    <div class="input-group">
+                        <input type="text" id="loadDefinitionFile" placeholder="first.xml" value="first.xml">
+                        <button onclick="loadDefinitionFromFile()">Load</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Available Definitions:</label>
+                    <select id="machineDefinitions" onchange="loadDefinitionDetails()">
+                        <option value="">Select a definition...</option>
+                    </select>
+                    <button onclick="refreshDefinitions()">Refresh</button>
+                </div>
+                <div id="definitionDetails" class="details-panel"></div>
+            </section>
+
+            <!-- Create Machine Instance Section -->
+            <section class="card">
+                <h2>Create Machine Instance</h2>
+                <div class="form-group">
+                    <label for="machineDefinitionId">Machine Definition ID:</label>
+                    <input type="text" id="machineDefinitionId" placeholder="first" value="first">
+                </div>
+                <div class="form-group">
+                    <label>Initial Context (JSON):</label>
+                    <textarea id="initialContext" rows="4" placeholder='{"name": "john", "age": "30"}'>{&#10;  "name": "john"&#10;}</textarea>
+                </div>
+                <button onclick="createMachineInstance()" class="btn-primary">Create Machine</button>
+                <div id="createResult" class="result-message"></div>
+            </section>
+
+            <!-- Machine Instances Section -->
+            <section class="card">
+                <h2>Machine Instances</h2>
+                <div class="form-group">
+                    <label for="machineId">Machine ID:</label>
+                    <div class="input-group">
+                        <input type="number" id="machineId" placeholder="Enter machine ID">
+                        <button onclick="loadMachine()">Load Machine</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Or select from list:</label>
+                    <select id="machineInstances" onchange="selectMachineFromList()">
+                        <option value="">Select a machine...</option>
+                    </select>
+                    <button onclick="refreshMachines()">Refresh</button>
+                </div>
+                <div id="machineDetails" class="details-panel"></div>
+            </section>
+
+            <!-- Machine Operations Section -->
+            <section class="card" id="operationsSection" style="display: none;">
+                <h2>Machine Operations</h2>
+                
+                <!-- Current State -->
+                <div class="state-display">
+                    <h3>Current State: <span id="currentState" class="state-badge"></span></h3>
+                </div>
+
+                <!-- Context -->
+                <div class="form-group">
+                    <label>Context:</label>
+                    <div id="contextDisplay" class="context-display"></div>
+                    <div class="form-group">
+                        <label>Update Context (JSON):</label>
+                        <textarea id="contextUpdate" rows="3" placeholder='{"name": "jane", "age": "25"}'></textarea>
+                        <button onclick="updateContext()" class="btn-secondary">Update Context</button>
+                    </div>
+                </div>
+
+                <!-- Available Transitions -->
+                <div class="form-group">
+                    <label>Available Transitions:</label>
+                    <div id="availableTransitions" class="transitions-list"></div>
+                    <button onclick="refreshAvailableTransitions()" class="btn-secondary">Refresh</button>
+                </div>
+
+                <!-- Execute Transition -->
+                <div class="form-group">
+                    <label for="transitionId">Execute Transition:</label>
+                    <div class="input-group">
+                        <input type="text" id="transitionId" placeholder="t0, t1, t2...">
+                        <button onclick="executeTransition()" class="btn-primary">Execute</button>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label>State History:</label>
+                        <div>
+                            <select id="historyOrder" onchange="loadHistory()" style="margin-right: 10px;">
+                                <option value="asc">Oldest First</option>
+                                <option value="desc">Newest First</option>
+                            </select>
+                            <button onclick="loadHistory()" class="btn-secondary">Refresh History</button>
+                        </div>
+                    </div>
+                    <div id="historyDisplay" class="history-display"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Messages -->
+        <div id="messageContainer" class="message-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

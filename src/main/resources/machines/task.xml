@@ -1,0 +1,40 @@
+<machine id="task">
+    <start id="start" name="start"/>
+    
+    <state id="DRAFT" name="one"/>       
+    <state id="REVIEW" name="two"/>
+
+    <state id="PENDING_APPROVAL" name="three"/>
+    <state id="EDITORIAL_REVIEW" name="four"/>
+    <state id="FINAL_APPROVAL" name="four"/>
+    <state id="PUBLISHED" name="five"/>
+
+    <end id="end" name="end"/>
+    
+    <transition id="t0" name="t0" source="start" destination="DRAFT"/>       
+    
+    <transition id="t1" name="t1" source="DRAFT" destination="REVIEW"/>
+     
+    <transition id="t2" name="t2" source="REVIEW" destination="PENDING_APPROVAL">
+    <!--
+    context machine
+    {
+  "users": [
+    {"name": "john", "role": "editor"},
+    {"name": "anna", "role": "reviewer"}
+  ]
+}
+    -->
+       <condition>
+            users.some(u => u.name === "john")
+        </condition>
+    </transition>
+    
+
+    <transition id="t3" name="t3" source="EDITORIAL_REVIEW" destination="FINAL_APPROVAL"/>
+
+    <transition id="t4" name="t4" source="FINAL_APPROVAL" destination="PUBLISHED"/>
+
+    <transition id="t5" name="t5" source="PUBLISHED" destination="end"/>
+</machine>
+
