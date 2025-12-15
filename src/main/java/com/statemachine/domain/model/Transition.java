@@ -13,5 +13,6 @@ public class Transition {
     private String sourceStateId;
     private String destinationStateId;
     private Condition condition;
+    private String role; // Role required to use this transition
 }
 

@@ -13,7 +13,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class XmlMachineParser {
@@ -64,13 +66,45 @@ public class XmlMachineParser {
 
         machineDefinition.setStates(states);
 
-        // Parse transitions
+        // Parse transitions - support both direct <transition> and <transitions role="..."> grouping
         List<Transition> transitions = new ArrayList<>();
-        NodeList transitionNodes = machineElement.getElementsByTagName("transition");
-        for (int i = 0; i < transitionNodes.getLength(); i++) {
-            Element transitionElement = (Element) transitionNodes.item(i);
-            Transition transition = parseTransition(transitionElement);
-            transitions.add(transition);
+        Set<String> processedTransitionIds = new HashSet<>();
+        
+        // First, parse transitions grouped by role
+        NodeList transitionsGroups = machineElement.getElementsByTagName("transitions");
+        for (int i = 0; i < transitionsGroups.getLength(); i++) {
+            Element transitionsGroup = (Element) transitionsGroups.item(i);
+            String role = transitionsGroup.getAttribute("role");
+            
+            // Get direct child transition elements (not nested ones)
+            NodeList childNodes = transitionsGroup.getChildNodes();
+            for (int j = 0; j < childNodes.getLength(); j++) {
+                if (childNodes.item(j).getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                    Element transitionElement = (Element) childNodes.item(j);
+                    if ("transition".equals(transitionElement.getNodeName())) {
+                        Transition transition = parseTransition(transitionElement);
+                        transition.setRole(role); // Set the role from the parent element
+                        transitions.add(transition);
+                        processedTransitionIds.add(transition.getId());
+                    }
+                }
+            }
+        }
+        
+        // Also parse standalone transitions (direct children of machine, not in transitions groups) for backward compatibility
+        NodeList allChildNodes = machineElement.getChildNodes();
+        for (int i = 0; i < allChildNodes.getLength(); i++) {
+            if (allChildNodes.item(i).getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                Element element = (Element) allChildNodes.item(i);
+                if ("transition".equals(element.getNodeName())) {
+                    // This is a direct child transition (not inside a transitions group)
+                    Transition transition = parseTransition(element);
+                    // Only add if not already processed from a transitions group
+                    if (!processedTransitionIds.contains(transition.getId())) {
+                        transitions.add(transition);
+                    }
+                }
+            }
         }
 
         machineDefinition.setTransitions(transitions);

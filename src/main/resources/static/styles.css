@@ -219,6 +219,56 @@ button:active {
     font-style: italic;
 }
 
+.transition-item .transition-role {
+    font-size: 12px;
+    color: #667eea;
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+.transition-item-disabled {
+    background-color: #f5f5f5 !important;
+    border-color: #ddd !important;
+}
+
+.transition-item-disabled:hover {
+    background-color: #f5f5f5 !important;
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.transition-group {
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.transition-group-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 15px;
+    font-weight: 600;
+}
+
+.transition-group-header h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.transition-group-items {
+    padding: 10px;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.transition-group-items .transition-item {
+    background: white;
+    margin: 0;
+}
+
 .result-message {
     margin-top: 15px;
     padding: 12px;

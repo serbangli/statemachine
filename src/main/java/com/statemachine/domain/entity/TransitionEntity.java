@@ -32,6 +32,9 @@ public class TransitionEntity {
     @Column(columnDefinition = "TEXT")
     private String conditionExpression;
 
+    @Column
+    private String role; // Role required to use this transition
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "machine_definition_id", nullable = false)
     private MachineDefinitionEntity machineDefinition;

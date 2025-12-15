@@ -20,7 +20,7 @@
                 <div class="form-group">
                     <label for="loadDefinitionFile">Load from File:</label>
                     <div class="input-group">
-                        <input type="text" id="loadDefinitionFile" placeholder="first.xml" value="first.xml">
+                        <input type="text" id="loadDefinitionFile" placeholder="task.xml" value="task.xml">
                         <button onclick="loadDefinitionFromFile()">Load</button>
                     </div>
                 </div>
@@ -39,7 +39,7 @@
                 <h2>Create Machine Instance</h2>
                 <div class="form-group">
                     <label for="machineDefinitionId">Machine Definition ID:</label>
-                    <input type="text" id="machineDefinitionId" placeholder="first" value="first">
+                    <input type="text" id="machineDefinitionId" placeholder="task" value="task">
                 </div>
                 <div class="form-group">
                     <label>Initial Context (JSON):</label>
@@ -91,9 +91,16 @@
 
                 <!-- Available Transitions -->
                 <div class="form-group">
-                    <label>Available Transitions:</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label>Available Transitions:</label>
+                        <div>
+                            <select id="roleFilter" onchange="refreshAvailableTransitions()" style="margin-right: 10px;">
+                                <option value="">All Roles</option>
+                            </select>
+                            <button onclick="refreshAvailableTransitions()" class="btn-secondary">Refresh</button>
+                        </div>
+                    </div>
                     <div id="availableTransitions" class="transitions-list"></div>
-                    <button onclick="refreshAvailableTransitions()" class="btn-secondary">Refresh</button>
                 </div>
 
                 <!-- Execute Transition -->

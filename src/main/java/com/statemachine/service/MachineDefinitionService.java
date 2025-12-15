@@ -140,6 +140,7 @@ public class MachineDefinitionService {
                 if (transition.getCondition() != null) {
                     transitionEntity.setConditionExpression(transition.getCondition().getExpression());
                 }
+                transitionEntity.setRole(transition.getRole());
                 transitionEntity.setMachineDefinition(entity);
                 return transitionEntity;
             })
@@ -167,6 +168,7 @@ public class MachineDefinitionService {
         if (entity.getConditionExpression() != null) {
             transition.setCondition(new Condition(entity.getConditionExpression()));
         }
+        transition.setRole(entity.getRole());
         return transition;
     }
 

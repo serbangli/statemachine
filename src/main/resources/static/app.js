@@ -133,15 +133,33 @@ async function loadDefinitionDetails() {
         }
         
         if (definition.transitions && definition.transitions.length > 0) {
-            html += '<h5>Transitions:</h5><ul>';
+            html += '<h5>Transitions:</h5>';
+            
+            // Group transitions by role
+            const transitionsByRole = {};
             definition.transitions.forEach(trans => {
-                html += `<li>${trans.transitionId}: ${trans.sourceStateId} → ${trans.destinationStateId}`;
-                if (trans.conditionExpression) {
-                    html += ` [condition: ${trans.conditionExpression}]`;
+                const role = trans.role || 'No Role';
+                if (!transitionsByRole[role]) {
+                    transitionsByRole[role] = [];
                 }
-                html += '</li>';
+                transitionsByRole[role].push(trans);
             });
-            html += '</ul>';
+            
+            // Display grouped by role
+            Object.keys(transitionsByRole).sort().forEach(role => {
+                const roleTransitions = transitionsByRole[role];
+                html += `<div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">`;
+                html += `<strong style="color: #667eea;">${role === 'No Role' ? 'No Role Required' : role}</strong> (${roleTransitions.length} transition${roleTransitions.length !== 1 ? 's' : ''})`;
+                html += '<ul style="margin-top: 8px; margin-bottom: 0;">';
+                roleTransitions.forEach(trans => {
+                    html += `<li>${trans.transitionId}: ${trans.sourceStateId} → ${trans.destinationStateId}`;
+                    if (trans.conditionExpression) {
+                        html += ` [condition: ${trans.conditionExpression}]`;
+                    }
+                    html += '</li>';
+                });
+                html += '</ul></div>';
+            });
         }
         
         detailsDiv.innerHTML = html;
@@ -274,24 +292,99 @@ async function refreshAvailableTransitions() {
     if (!machineId) return;
     
     try {
-        const transitions = await apiCall(`/machines/${machineId}/transitions/available`);
         const transitionsDiv = document.getElementById('availableTransitions');
+        const roleFilter = document.getElementById('roleFilter');
         
-        if (transitions.length === 0) {
-            transitionsDiv.innerHTML = '<p style="color: #999;">No available transitions from current state</p>';
+        // Save the currently selected role before resetting the dropdown
+        const previouslySelectedRole = roleFilter.value;
+        
+        // Get all transitions (for role dropdown)
+        const allTransitions = await apiCall(`/machines/${machineId}/transitions/all`).catch(() => []);
+        
+        // Group all transitions by role (for dropdown)
+        const allRoles = new Set();
+        allTransitions.forEach(trans => {
+            const role = trans.role || 'No Role';
+            allRoles.add(role);
+        });
+        
+        // Update role filter dropdown with all roles
+        roleFilter.innerHTML = '<option value="">All Roles</option>';
+        Array.from(allRoles).sort().forEach(role => {
+            const option = document.createElement('option');
+            option.value = role;
+            option.textContent = role === 'No Role' ? 'No Role Required' : role;
+            roleFilter.appendChild(option);
+        });
+        
+        // Restore the previously selected role if it still exists
+        const selectedRole = (previouslySelectedRole && Array.from(allRoles).includes(previouslySelectedRole)) 
+            ? previouslySelectedRole 
+            : '';
+        if (selectedRole) {
+            roleFilter.value = selectedRole;
+        }
+        
+        // Get available transitions filtered by selected role
+        const roleParam = selectedRole && selectedRole !== '' ? `?role=${encodeURIComponent(selectedRole)}` : '';
+        const availableTransitions = await apiCall(`/machines/${machineId}/transitions/available${roleParam}`).catch(() => []);
+        
+        if (allTransitions.length === 0) {
+            transitionsDiv.innerHTML = '<p style="color: #999;">No transitions from current state</p>';
             return;
         }
         
-        let html = '';
-        transitions.forEach(trans => {
-            html += `<div class="transition-item" onclick="selectTransition('${trans.id}')">`;
-            html += `<span class="transition-id">${trans.id}</span>`;
-            html += `<span class="transition-name">${trans.name || trans.id}</span>`;
-            html += `<div class="transition-path">${trans.sourceStateId} → ${trans.destinationStateId}</div>`;
-            if (trans.condition) {
-                html += `<div class="transition-condition">Condition: ${trans.condition.expression}</div>`;
+        // Create a Set of available transition IDs for quick lookup
+        const availableTransitionIds = new Set(availableTransitions.map(t => t.id));
+        
+        // Group available transitions by role (for display)
+        const transitionsByRole = {};
+        availableTransitions.forEach(trans => {
+            const role = trans.role || 'No Role';
+            if (!transitionsByRole[role]) {
+                transitionsByRole[role] = [];
             }
-            html += '</div>';
+            transitionsByRole[role].push(trans);
+        });
+        
+        // Get selected role filter (use the restored value)
+        const currentSelectedRole = selectedRole;
+        
+        // Display transitions grouped by role
+        let html = '';
+        const rolesToShow = currentSelectedRole ? [currentSelectedRole] : Array.from(allRoles).sort();
+        
+        rolesToShow.forEach(role => {
+            const roleTransitions = transitionsByRole[role] || [];
+            const allRoleTransitions = allTransitions.filter(t => (t.role || 'No Role') === role);
+            
+            // Skip if no transitions for this role
+            if (allRoleTransitions.length === 0) return;
+            
+            // Role header
+            html += `<div class="transition-group">`;
+            html += `<div class="transition-group-header">`;
+            html += `<h4>${role === 'No Role' ? 'No Role Required' : role} (${roleTransitions.length}/${allRoleTransitions.length} available)</h4>`;
+            html += `</div>`;
+            html += `<div class="transition-group-items">`;
+            
+            if (roleTransitions.length === 0) {
+                html += `<p style="color: #999; padding: 10px;">No available transitions for this role. Update context with appropriate role to enable transitions.</p>`;
+            } else {
+                // Show available transitions for this role
+                roleTransitions.forEach(trans => {
+                    html += `<div class="transition-item" onclick="selectTransition('${trans.id}')">`;
+                    html += `<span class="transition-id">${trans.id}</span>`;
+                    html += `<span class="transition-name">${trans.name || trans.id}</span>`;
+                    html += `<div class="transition-path">${trans.sourceStateId} → ${trans.destinationStateId}</div>`;
+                    if (trans.condition) {
+                        html += `<div class="transition-condition">Condition: ${trans.condition.expression}</div>`;
+                    }
+                    html += '</div>';
+                });
+            }
+            
+            html += `</div></div>`;
         });
         
         transitionsDiv.innerHTML = html;
@@ -408,9 +501,9 @@ async function loadHistory() {
             html += `<span class="history-transition-id">[${entry.transitionId}]</span>`;
             html += `</div>`;
             html += `<div class="history-context">`;
-            html += `<details><summary>Context Snapshot</summary>`;
+            html += `<div class="history-context-label">Context Snapshot:</div>`;
             html += `<pre class="context-snapshot">${contextStr}</pre>`;
-            html += `</details></div>`;
+            html += `</div>`;
             html += `</div>`;
         });
         html += '</div>';

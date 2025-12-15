@@ -99,6 +99,9 @@ public class MachineService {
 
         // Evaluate condition if present
         if (transition.getCondition() != null) {
+            
+            log.debug("expression: "+transition.getCondition().getExpression()+ " context: "+machine.getContext());
+
             boolean conditionMet = conditionEvaluator.evaluate(
                 transition.getCondition().getExpression(),
                 machine.getContext()
@@ -108,6 +111,8 @@ public class MachineService {
                     "Transition condition not met: " + transition.getCondition().getExpression()
                 );
             }
+        }else{
+            log.debug("no condition, executing transition");
         }
 
         // Record history before executing transition
@@ -139,8 +144,18 @@ public class MachineService {
         machine.getContext().putAll(contextUpdates);
         machine = machineRepository.save(machine);
 
+        // Record a history entry for this context update (even if state does not change)
+        // This lets the UI show how the context evolved over time.
+        recordHistory(
+            machine.getId(),
+            machine.getCurrentStateId(),
+            machine.getCurrentStateId(),
+            "CONTEXT_UPDATE",
+            new HashMap<>(machine.getContext())
+        );
+
         // After updating context, check for available transitions and navigate automatically
-        List<Transition> availableTransitions = getAvailableTransitionsInternal(machine);
+        List<Transition> availableTransitions = getAvailableTransitionsInternal(machine, null);
         
         if (availableTransitions.isEmpty()) {
             // No transitions available, just return the updated machine
@@ -161,40 +176,152 @@ public class MachineService {
     }
 
     public List<Transition> getAvailableTransitions(Long machineId) {
+        return getAvailableTransitions(machineId, null);
+    }
+
+    public List<Transition> getAvailableTransitions(Long machineId, String role) {
         MachineEntity machine = machineRepository.findById(machineId)
             .orElseThrow(() -> new IllegalArgumentException("Machine not found: " + machineId));
-        return getAvailableTransitionsInternal(machine);
+        return getAvailableTransitionsInternal(machine, role);
+    }
+
+    /**
+     * Gets all transitions from the current state without filtering by role or condition.
+     * Useful for displaying all possible transitions grouped by role.
+     */
+    public List<Transition> getAllTransitionsFromCurrentState(Long machineId) {
+        MachineEntity machine = machineRepository.findById(machineId)
+            .orElseThrow(() -> new IllegalArgumentException("Machine not found: " + machineId));
+        
+        MachineDefinitionEntity definition = machineDefinitionService.getDefinition(machine.getMachineDefinitionId())
+            .orElseThrow(() -> new IllegalArgumentException("Machine definition not found: " + machine.getMachineDefinitionId()));
+
+        MachineDefinition model = machineDefinitionService.convertToModel(definition);
+
+        // Get all transitions from current state without filtering
+        return model.getTransitions().stream()
+            .filter(t -> t.getSourceStateId().equals(machine.getCurrentStateId()))
+            .toList();
     }
 
     /**
      * Internal helper method to get available transitions for a machine entity.
      * This avoids redundant database fetches when we already have the machine entity.
+     * 
+     * @param machine The machine entity
+     * @param roleFilter Optional role to filter by. If provided, only transitions for this role are returned.
      */
-    private List<Transition> getAvailableTransitionsInternal(MachineEntity machine) {
+    private List<Transition> getAvailableTransitionsInternal(MachineEntity machine, String roleFilter) {
         MachineDefinitionEntity definition = machineDefinitionService.getDefinition(machine.getMachineDefinitionId())
             .orElseThrow(() -> new IllegalArgumentException("Machine definition not found: " + machine.getMachineDefinitionId()));
 
         MachineDefinition model = machineDefinitionService.convertToModel(definition);
 
         // Get all transitions from current state
-        List<Transition> availableTransitions = model.getTransitions().stream()
+        List<Transition> transitionsFromCurrentState = model.getTransitions().stream()
             .filter(t -> t.getSourceStateId().equals(machine.getCurrentStateId()))
             .toList();
 
-        // Filter by conditions
-        return availableTransitions.stream()
+        log.debug("Found {} transitions from current state: {}", transitionsFromCurrentState.size(), 
+            machine.getCurrentStateId());
+        if (roleFilter != null && !roleFilter.isEmpty()) {
+            log.debug("Filtering by role: {}", roleFilter);
+        }
+
+        // Filter by role and conditions
+        List<Transition> result = transitionsFromCurrentState.stream()
             .filter(t -> {
+                // If a role filter is specified, only include transitions for that role
+                if (roleFilter != null && !roleFilter.isEmpty()) {
+                    String transitionRole = t.getRole() != null && !t.getRole().isEmpty() ? t.getRole() : "No Role";
+                    if (!roleFilter.equals(transitionRole)) {
+                        log.debug("Transition {} filtered out: role '{}' doesn't match filter '{}'", 
+                            t.getId(), transitionRole, roleFilter);
+                        return false; // Transition doesn't match the requested role
+                    }
+                    // When filtering by role, we still need to check if user has access to this role
+                    // if (!hasRole(machine.getContext(), roleFilter)) {
+                    //     log.debug("Transition {} filtered out: user doesn't have role '{}'", t.getId(), roleFilter);
+                    //     return false; // User doesn't have the required role
+                    // }
+                } else {
+                    // No role filter - check if transition requires a specific role and user has it
+                    // if (t.getRole() != null && !t.getRole().isEmpty()) {
+                    //     if (!hasRole(machine.getContext(), t.getRole())) {
+                    //         log.debug("Transition {} filtered out: user doesn't have role '{}'", t.getId(), t.getRole());
+                    //         return false; // User doesn't have the required role
+                    //     }
+                    // }
+                }
+                
+                // Then check condition if present
                 if (t.getCondition() == null) {
+                    log.debug("Transition {} passed all checks", t.getId());
                     return true;
                 }
                 try {
-                    boolean result = conditionEvaluator.evaluate(t.getCondition().getExpression(), machine.getContext());
-                    return result;
+                    boolean result1 = conditionEvaluator.evaluate(t.getCondition().getExpression(), machine.getContext());
+                    if (result1) {
+                        log.debug("Transition {} passed condition check", t.getId());
+                    } else {
+                        log.debug("Transition {} filtered out: condition not met", t.getId());
+                    }
+                    return result1;
                 } catch (Exception e) {
+                    log.debug("Transition {} filtered out: condition evaluation error: {}", t.getId(), e.getMessage());
                     return false;
                 }
             })
             .toList();
+        
+        log.debug("Returning {} available transitions", result.size());
+        return result;
+    }
+
+    /**
+     * Checks if the context contains a user with the specified role.
+     * Supports both "users" array format and direct "role" field.
+     */
+    private boolean hasRole(Map<String, Object> context, String requiredRole) {
+        if (context == null || requiredRole == null) {
+            return false;
+        }
+        
+        // Check if there's a direct "role" field in context
+        Object roleObj = context.get("role");
+        if (roleObj != null && requiredRole.equals(String.valueOf(roleObj))) {
+            return true;
+        }
+        
+        // Check if there's a "users" array with users having the role
+        Object usersObj = context.get("users");
+        if (usersObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> users = (List<Object>) usersObj;
+            for (Object userObj : users) {
+                if (userObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> user = (Map<String, Object>) userObj;
+                    Object userRole = user.get("role");
+                    if (userRole != null && requiredRole.equals(String.valueOf(userRole))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Check if there's a "currentUser" object with a role
+        Object currentUserObj = context.get("currentUser");
+        if (currentUserObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> currentUser = (Map<String, Object>) currentUserObj;
+            Object userRole = currentUser.get("role");
+            if (userRole != null && requiredRole.equals(String.valueOf(userRole))) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**

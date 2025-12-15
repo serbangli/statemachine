@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 @Service
@@ -34,8 +35,14 @@ public class ConditionEvaluator {
             // This allows expressions like: name == "John" or name == 'John'
             // Convert Java Lists to JavaScript arrays so array methods (some, filter, etc.) work
             for (Map.Entry<String, Object> entry : convertedContext.entrySet()) {
-                Value jsValue = convertToJavaScriptValue(polyglotContext, entry.getValue());
-                bindings.putMember(entry.getKey(), jsValue);
+                try {
+                    Value jsValue = convertToJavaScriptValue(polyglotContext, entry.getValue());
+                    bindings.putMember(entry.getKey(), jsValue);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error converting context variable '" + entry.getKey() + 
+                        "' (type: " + (entry.getValue() != null ? entry.getValue().getClass().getName() : "null") + 
+                        ") to JavaScript value: " + e.getMessage(), e);
+                }
             }
 
             // Evaluate the expression as JavaScript
@@ -49,7 +56,14 @@ public class ConditionEvaluator {
             // If result is not boolean, try to convert
             return Boolean.parseBoolean(result.toString());
         } catch (Exception e) {
-            throw new RuntimeException("Error evaluating condition: " + conditionExpression, e);
+            // Log the context for debugging
+            System.err.println("Error evaluating condition: " + conditionExpression);
+            System.err.println("Context: " + context);
+            System.err.println("Normalized expression: " + normalizeExpression(conditionExpression));
+            e.printStackTrace();
+            throw new RuntimeException("Error evaluating condition: " + conditionExpression + ". " + 
+                "Context keys: " + (context != null ? context.keySet() : "null") + 
+                ". Error: " + e.getMessage(), e);
         }
     }
 
@@ -83,6 +97,15 @@ public class ConditionEvaluator {
         Map<String, Object> converted = new HashMap<>();
         for (Map.Entry<String, Object> entry : context.entrySet()) {
             Object value = entry.getValue();
+
+            // Special-case: if "users" is provided as a single object instead of an array,
+            // wrap it into a list so JS array methods like some() work.
+            if ("users".equals(entry.getKey()) && value instanceof Map) {
+                List<Object> usersList = new ArrayList<>();
+                usersList.add(value);
+                value = usersList;
+            }
+
             Object convertedValue = convertValue(value);
             converted.put(entry.getKey(), convertedValue);
         }
@@ -102,7 +125,7 @@ public class ConditionEvaluator {
         
         // If it's already a number, boolean, or complex object, return as-is
         if (value instanceof Number || value instanceof Boolean || 
-            value instanceof Map || value instanceof List) {
+            value instanceof Map || value instanceof List || value.getClass().isArray()) {
             return value;
         }
         
@@ -143,6 +166,7 @@ public class ConditionEvaluator {
         }
         
         // Convert Java Lists to JavaScript arrays
+        // Handle both java.util.List and any Collection that might be returned from JSON deserialization
         if (value instanceof List) {
             List<?> list = (List<?>) value;
             // Create a JavaScript array and populate it using push
@@ -154,7 +178,30 @@ public class ConditionEvaluator {
             return jsArray;
         }
         
+        // Convert Object[] arrays to JavaScript arrays (possible from JSON deserialization)
+        if (value.getClass().isArray()) {
+            Object[] array = (Object[]) value;
+            Value jsArray = polyglotContext.eval("js", "[]");
+            for (Object item : array) {
+                Value jsItem = convertToJavaScriptValue(polyglotContext, item);
+                jsArray.invokeMember("push", jsItem);
+            }
+            return jsArray;
+        }
+
+        // Handle arrays (Object[]) that might come from JSON deserialization
+        if (value.getClass().isArray()) {
+            Object[] array = (Object[]) value;
+            Value jsArray = polyglotContext.eval("js", "[]");
+            for (Object item : array) {
+                Value jsItem = convertToJavaScriptValue(polyglotContext, item);
+                jsArray.invokeMember("push", jsItem);
+            }
+            return jsArray;
+        }
+        
         // Convert Java Maps to JavaScript objects
+        // Handle both java.util.Map and any Map implementation (including LinkedHashMap from JSON deserialization)
         if (value instanceof Map) {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>) value;

@@ -1,41 +1,32 @@
 <machine id="task">
     <start id="start" name="start"/>
-    
-    <state id="DRAFT" name="one"/>       
-    <state id="REVIEW" name="two"/>
-
-    <state id="PENDING_APPROVAL" name="three"/>
-    <state id="EDITORIAL_REVIEW" name="four"/>
-    <state id="FINAL_APPROVAL" name="four"/>
-    <state id="PUBLISHED" name="five"/>
-
+    <state id="DRAFT" name="DRAFT"/>       
+    <state id="REVIEW" name="REVIEW"/>    
+    <state id="PENDING_APPROVAL" name="PENDING_APPROVAL"/>    
+    <state id="EDITORIAL_REVIEW" name="EDITORIAL_REVIEW"/>
+    <state id="FINAL_APPROVAL" name="FINAL_APPROVAL"/>
+    <state id="PUBLISHED" name="PUBLISHED"/>
     <end id="end" name="end"/>
     
-    <transition id="t0" name="t0" source="start" destination="DRAFT"/>       
-    
-    <transition id="t1" name="t1" source="DRAFT" destination="REVIEW"/>
-     
-    <transition id="t2" name="t2" source="REVIEW" destination="PENDING_APPROVAL">
-    <!--
-    context machine
-    {
-  "users": [
-    {"name": "john", "role": "editor"},
-    {"name": "anna", "role": "reviewer"}
-  ]
-}
-    -->
-       <condition>
-            users.some(u => u.name === "john")
-        </condition>
-    </transition>
-    
-    <transition id="t21" name="t21" source="PENDING_APPROVAL" destination="EDITORIAL_REVIEW"/>
-
-    <transition id="t3" name="t3" source="EDITORIAL_REVIEW" destination="FINAL_APPROVAL"/>
-
-    <transition id="t4" name="t4" source="FINAL_APPROVAL" destination="PUBLISHED"/>
-
-    <transition id="t5" name="t5" source="PUBLISHED" destination="end"/>
+    <transitions role="owner">
+    <transition id="o_t0" name="t0" source="start" destination="DRAFT"/>       
+        <transition id="o_t1" name="t1" source="DRAFT" destination="REVIEW"/>
+        <transition id="o_t12" name="t12" source="DRAFT" destination="PENDING_APPROVAL"/>
+        <!-- 
+            <transition id="o_t2" name="t2" source="REVIEW" destination="PENDING_APPROVAL"/> 
+        -->   
+        <transition id="o_t3" name="t3" source="PENDING_APPROVAL" destination="EDITORIAL_REVIEW"/>
+        <transition id="o_t32" name="t32" source="PENDING_APPROVAL" destination="REVIEW"/>
+        <transition id="o_t4" name="t4" source="EDITORIAL_REVIEW" destination="FINAL_APPROVAL"/>
+        <transition id="o_t5" name="t5" source="FINAL_APPROVAL" destination="PUBLISHED"/>
+        <transition id="o_t6" name="t6" source="PUBLISHED" destination="end"/>
+    </transitions>
+    <transitions role="reviewer">
+        <transition id="r_t2" name="t2" source="REVIEW" destination="PENDING_APPROVAL">        
+            <condition>
+                reviewers.length === 3
+            </condition>        
+        </transition>
+    </transitions>
 </machine>
 
