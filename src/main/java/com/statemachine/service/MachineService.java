@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.statemachine.websocket.MachineStateWebSocketHandler;
+import com.statemachine.websocket.MachineStateWebSocketHandler.MachineStateChangeMessage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,9 @@ public class MachineService {
 
     @Autowired
     private ConditionEvaluator conditionEvaluator;
+
+    @Autowired
+    private MachineStateWebSocketHandler machineStateWebSocketHandler;
 
     @Transactional
     public MachineEntity createMachineInstance(String machineDefinitionId, Map<String, Object> initialContext) {
@@ -127,12 +132,27 @@ public class MachineService {
         // Record history entry
         recordHistory(machine.getId(), fromStateId, destinationStateId, 
                      transitionId, contextSnapshot);
+
+        // Notify WebSocket listeners about the state change
+        try {
+            MachineStateChangeMessage msg = new MachineStateChangeMessage(
+                machine.getId(),
+                fromStateId,
+                destinationStateId,
+                transitionId,
+                "STATE_CHANGED",
+                machine.getContext()
+            );
+            machineStateWebSocketHandler.broadcastStateChange(msg);
+        } catch (Exception e) {
+            log.warn("Failed to broadcast machine state change over WebSocket", e);
+        }
         
         return machine;
     }
 
     @Transactional
-    public MachineEntity updateContext(Long machineId, Map<String, Object> contextUpdates) {
+    public MachineEntity updateContext(Long machineId, Map<String, Object> contextUpdates, String role) {
         MachineEntity machine = machineRepository.findById(machineId)
             .orElseThrow(() -> new IllegalArgumentException("Machine not found: " + machineId));
 
@@ -154,9 +174,25 @@ public class MachineService {
             new HashMap<>(machine.getContext())
         );
 
-        // After updating context, check for available transitions and navigate automatically
-        List<Transition> availableTransitions = getAvailableTransitionsInternal(machine, null);
         
+        // Notify WebSocket listeners about the state change
+        try {
+            MachineStateChangeMessage msg = new MachineStateChangeMessage(
+                machine.getId(),
+                machine.getCurrentStateId(),
+                machine.getCurrentStateId(),
+                null,
+                "CONTEXT_UPDATE",
+                machine.getContext()
+            );
+            machineStateWebSocketHandler.broadcastStateChange(msg);
+        } catch (Exception e) {
+            log.warn("Failed to broadcast machine state change over WebSocket", e);
+        }
+        // After updating context, check for available transitions and navigate automatically
+        List<Transition> availableTransitions = getAvailableTransitionsInternal(machine, role);
+        
+
         if (availableTransitions.isEmpty()) {
             // No transitions available, just return the updated machine
             return machine;

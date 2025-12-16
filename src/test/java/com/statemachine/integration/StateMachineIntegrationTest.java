@@ -191,7 +191,7 @@ class StateMachineIntegrationTest {
         contextUpdates.put("name", "john");
         contextUpdates.put("age", "30");
 
-        MachineEntity updatedMachine = machineService.updateContext(machine.getId(), contextUpdates);
+        MachineEntity updatedMachine = machineService.updateContext(machine.getId(), contextUpdates, null);
 
         assertEquals("john", updatedMachine.getContext().get("name"));
         assertEquals("30", updatedMachine.getContext().get("age"));

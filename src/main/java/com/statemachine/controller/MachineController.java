@@ -176,9 +176,10 @@ public class MachineController {
     public ResponseEntity<MachineResponse> updateContext(
             @Parameter(description = "Machine instance ID", required = true)
             @PathVariable Long machineId,
-            @RequestBody UpdateContextRequest request) {
+            @RequestBody UpdateContextRequest request,
+            @RequestParam(required = false) String role){
         try {
-            MachineEntity machine = machineService.updateContext(machineId, request.getContext());
+            MachineEntity machine = machineService.updateContext(machineId, request.getContext(), role);
             return ResponseEntity.ok(convertToResponse(machine));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();

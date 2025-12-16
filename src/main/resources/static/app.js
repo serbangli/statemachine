@@ -429,6 +429,7 @@ async function executeTransition() {
 async function updateContext() {
     const machineId = document.getElementById('machineId').value;
     const contextText = document.getElementById('contextUpdate').value;
+    const role = document.getElementById('roleFilter').value;
     
     if (!machineId) {
         showMessage('Please load a machine first', 'error');
@@ -449,7 +450,7 @@ async function updateContext() {
     }
     
     try {
-        const machine = await apiCall(`/machines/${machineId}/context`, 'PUT', {
+        const machine = await apiCall(`/machines/${machineId}/context?${role ? `role=${role}` : ''}`, 'PUT', {
             context: context
         });
         
@@ -515,9 +516,80 @@ async function loadHistory() {
     }
 }
 
+// WebSocket for live machine state updates
+let machineUpdatesSocket = null;
+let currentMachineId = null;
+
+function initWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${protocol}://${window.location.host}/ws/machine-updates`;
+
+    try {
+        machineUpdatesSocket = new WebSocket(wsUrl);
+
+        machineUpdatesSocket.onopen = () => {
+            console.log('WebSocket connected to', wsUrl);
+        };
+
+        machineUpdatesSocket.onclose = () => {
+            console.log('WebSocket disconnected');
+            // Try to reconnect after a delay
+            setTimeout(initWebSocket, 5000);
+        };
+
+        machineUpdatesSocket.onerror = (err) => {
+            console.error('WebSocket error', err);
+        };
+
+        machineUpdatesSocket.onmessage = async (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (!msg || !msg.machineId) {
+                    return;
+                }
+
+                // Only react for the currently loaded machine
+                const selectedMachineId = document.getElementById('machineId')?.value;
+                if (!selectedMachineId || Number(selectedMachineId) !== Number(msg.machineId)) {
+                    return;
+                }
+
+                if (msg.type === 'STATE_CHANGED') {
+                    showMessage(
+                        `Machine ${msg.machineId} state changed: ${msg.fromStateId} → ${msg.toStateId} [${msg.transitionId}]`,
+                        'info'
+                    );
+                    // Refresh details, transitions, and history
+                    await loadMachine();
+                    await refreshAvailableTransitions();
+                    await loadHistory();
+                }
+                if (msg.type === 'CONTEXT_UPDATE') {
+                    const ctxText = msg.machineContext
+                        ? JSON.stringify(msg.machineContext)
+                        : '';
+                    showMessage(
+                        `Machine ${msg.machineId} context changed: ${ctxText}`,
+                        'info'
+                    );
+                    // Refresh details, transitions, and history
+                    await loadMachine();
+                    await refreshAvailableTransitions();
+                    await loadHistory();
+                }
+            } catch (e) {
+                console.error('Error handling WebSocket message', e);
+            }
+        };
+    } catch (e) {
+        console.error('Failed to initialize WebSocket', e);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     refreshDefinitions();
     refreshMachines();
+    initWebSocket();
 });
 
