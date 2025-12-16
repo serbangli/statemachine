@@ -111,7 +111,7 @@ class ConditionEvaluatorTest {
         boolean result3 = evaluator.evaluate("users.some(u => u.role === 'editor')", context);
         assertTrue(result3, "Should find user with role 'editor'");
          // Test with role condition
-         boolean result4= evaluator.evaluate("users.length === 3", context);
+         boolean result4= evaluator.evaluate("users.length === 2", context);
          assertTrue(result4, "Should find 2 users");
     }
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<machine id="first">
+    <start id="start" name="start"/>
+    
+    <state id="one" name="one"/>       
+    <state id="two" name="two"/>        
+    
+    <end id="end" name="end"/>
+    
+    <transition id="t0" name="t0" source="start" destination="one"/>       
+    
+    <transition id="t1" name="t1" source="one" destination="two">
+        <condition>
+            name == "john"
+        </condition>
+    </transition>
+    
+    <transition id="t2" name="t2" source="two" destination="end"/>
+</machine>
