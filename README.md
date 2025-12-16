@@ -134,6 +134,13 @@ http://localhost:8080
    - Visual feedback for all operations
    - Error handling with user-friendly messages
 
+### WebSocket Updates
+
+The UI receives real-time machine state updates over a WebSocket endpoint provided by the backend:
+
+- Endpoint: `/ws/machine-updates`
+- Technology: Spring WebSocket with a custom handler
+
 ## API Endpoints
 
 - `POST /api/machine-definitions/load-from-file?fileName=first.xml` - Load machine definition
@@ -145,4 +152,3 @@ http://localhost:8080
 - `POST /api/machines/{id}/transitions/execute` - Execute transition
 - `GET /api/machines/{id}/transitions/available` - Get available transitions
 - `PUT /api/machines/{id}/context` - Update machine context
-
