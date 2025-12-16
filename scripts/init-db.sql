@@ -1,11 +1,18 @@
 -- State Machine Database Initialization Script
--- This script creates the database and schema for the State Machine application
+-- This script initializes the schema for the State Machine application.
+-- It assumes the `statemachine` database already exists.
+--
+-- Typical usage (local PostgreSQL):
+--   psql -U postgres -d statemachine -f scripts/init-db.sql
+--
+-- To create the database first, you can either:
+--   - Run:  psql -U postgres -c "CREATE DATABASE statemachine;"
+--   - Or use: scripts/create-database.sh (recommended)
+--
+-- When using Docker, you can run:
+--   docker exec -i <postgres-container> psql -U postgres -d statemachine < scripts/init-db.sql
 
--- Create database (run this as postgres superuser)
--- Note: This command must be run separately as it cannot be executed within a transaction
--- psql -U postgres -c "CREATE DATABASE statemachine;"
-
--- Connect to the statemachine database
+-- Connect to the statemachine database (ignored if already connected via -d)
 \c statemachine;
 
 -- Create schema if it doesn't exist
@@ -123,4 +130,3 @@ DO $$
 BEGIN
     RAISE NOTICE 'Database initialization completed successfully!';
 END $$;
-
