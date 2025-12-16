@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Request to execute a transition")
 public class TransitionRequest {
-    @Schema(description = "Transition ID to execute", example = "t0", required = true)
+    @Schema(description = "Transition ID to execute", example = "t0", requiredMode = Schema.RequiredMode.REQUIRED)
     private String transitionId;
 }
 

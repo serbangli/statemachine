@@ -3,6 +3,8 @@ package com.statemachine.websocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -26,13 +28,13 @@ public class MachineStateWebSocketHandler extends TextWebSocketHandler {
             Collections.synchronizedSet(new HashSet<>());
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         sessions.add(session);
         log.debug("WebSocket connection established: {}", session.getId());
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed( @NonNull WebSocketSession session, @NonNull CloseStatus status) {
         sessions.remove(session);
         log.debug("WebSocket connection closed: {}", session.getId());
     }
@@ -43,6 +45,7 @@ public class MachineStateWebSocketHandler extends TextWebSocketHandler {
     public void broadcastStateChange(MachineStateChangeMessage message) {
         try {
             String payload = objectMapper.writeValueAsString(message);
+            if (null != payload) {
             TextMessage textMessage = new TextMessage(payload);
 
             synchronized (sessions) {
@@ -52,6 +55,7 @@ public class MachineStateWebSocketHandler extends TextWebSocketHandler {
                     }
                 }
             }
+            }   
         } catch (IOException e) {
             log.warn("Failed to broadcast machine state change", e);
         }
