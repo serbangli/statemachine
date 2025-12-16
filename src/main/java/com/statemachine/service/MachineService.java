@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.statemachine.websocket.MachineStateWebSocketHandler;
 import com.statemachine.websocket.MachineStateWebSocketHandler.MachineStateChangeMessage;
 import java.util.HashMap;
