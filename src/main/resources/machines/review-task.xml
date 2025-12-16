@@ -1,8 +1,8 @@
-<machine id="task1">
+<machine id="review-task">
     <start id="start" name="start"/>
         <state id="IN_REVIEW" name="IN_REVIEW"/>  
         <state id="REVIEWED" name="REVIEWED"/>    
-        <state id="REVIEWED" name="REVIEW_CLOSED"/>
+        <state id="REVIEW_CLOSED" name="REVIEW_CLOSED"/>
         <state id="START_INTEGRATION" name="START_INTEGRATION"/>   
     <end id="end" name="end"/>
     
@@ -15,9 +15,14 @@
         <transition id="o_t4" name="t4" source="START_INTEGRATION" destination="end"/>        
     </transitions>
     
-    <transitions role="reviewer">
-        <transition id="r_t1" name="t1" source="IN_REVIEW" destination="REVIEWED"/>
+    <transitions role="reviewer">        
         <!-- {  
+     "reqreviewers" :[
+     {"name":"john"},
+     {"name":"doe"},
+     {"name":"jane"}
+     ],
+     
   "reviewers": [    
     {
       "name": "john"
@@ -31,21 +36,11 @@
   ]
 } 
         -->
-        <transition id="r_t2" name="t2" source="REVIEWED" destination="REVIEW_CLOSED">        
+        <transition id="r_t2" name="t2" source="IN_REVIEW" destination="REVIEWED">        
             <condition>
-                reviewers.length === 3
+                reviewers.length === reqreviewers.length
             </condition>        
-        </transition>
-        <transition id="r_t21" name="t21" source="REVIEWED" destination="IN_REVIEW">        
-            <condition>
-                reviewers.length !== 3
-            </condition>        
-        </transition>
-        <transition id="r_t3" name="t3" source="REVIEWED" destination="REVIEW_CLOSED">        
-            <condition>
-                reviewers.length === 5
-            </condition>        
-        </transition>
+        </transition>      
     </transitions>
 </machine>
 
