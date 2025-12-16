@@ -36,7 +36,7 @@
   ]
 } 
         -->
-        <transition id="r_t2" name="t2" source="IN_REVIEW" destination="REVIEWED">        
+        <transition id="r_t2" name="t2" source="IN_REVIEW" destination="REVIEWED" >        
             <condition>
                 reviewers.length === reqreviewers.length
             </condition>        

@@ -4,12 +4,15 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class ConditionEvaluator {
 
     public boolean evaluate(String conditionExpression, Map<String, Object> context) {
@@ -46,25 +49,31 @@ public class ConditionEvaluator {
             }
 
             // Evaluate the expression as JavaScript
-            Value result = polyglotContext.eval("js", normalizedExpression);
+            try{
 
-            // Handle boolean result
+                Value result = polyglotContext.eval("js", normalizedExpression);
+                // Handle boolean result
             if (result.isBoolean()) {
                 return result.asBoolean();
             }
             
             // If result is not boolean, try to convert
             return Boolean.parseBoolean(result.toString());
+            } catch (Exception e) {
+                // Log the context for debugging
+                log.warn("Error evaluating condition: " + normalizeExpression(conditionExpression) + ". " + 
+                    "Context keys: " + (context != null ? context.keySet() : "null") + 
+                    ". Error: " + e.getMessage());
+            }
+            return false;
+        
         } catch (Exception e) {
-            // Log the context for debugging
-            System.err.println("Error evaluating condition: " + conditionExpression);
-            System.err.println("Context: " + context);
-            System.err.println("Normalized expression: " + normalizeExpression(conditionExpression));
-            e.printStackTrace();
-            throw new RuntimeException("Error evaluating condition: " + conditionExpression + ". " + 
+            // Log the context for debugging            
+            log.warn("Error evaluating condition: " + normalizeExpression(conditionExpression) + ". " + 
                 "Context keys: " + (context != null ? context.keySet() : "null") + 
                 ". Error: " + e.getMessage(), e);
         }
+        return false;
     }
 
     /**
