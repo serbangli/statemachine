@@ -1,4 +1,4 @@
-package com.statemachine.dto;
+package com.statemachine.dto.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -11,19 +11,13 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Machine instance response")
-public class MachineResponse {
+@Schema(description = "Task review response")
+public class TaskReviewResponse {
     @Schema(description = "Machine instance ID", example = "1")
-    private Long id;
+    private Long machineId;
     
     @Schema(description = "Machine definition ID", example = "task")
     private String machineDefinitionId;
-    
-    @Schema(description = "Managed object ID", example = "1")
-    private String managedObjectId;
-    
-    @Schema(description = "Managed object type", example = "task")
-    private String managedObjectType;
     
     @Schema(description = "Current state ID", example = "DRAFT")
     private String currentStateId;

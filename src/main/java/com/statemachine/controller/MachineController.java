@@ -45,7 +45,7 @@ public class MachineController {
         try {
             MachineEntity machine = machineService.createMachineInstance(
                 request.getMachineDefinitionId(),
-                request.getInitialContext()
+                request.getInitialContext(), null,null
             );
             return ResponseEntity.ok(convertToResponse(machine));
         } catch (Exception e) {
@@ -214,6 +214,8 @@ public class MachineController {
         return new MachineResponse(
             machine.getId(),
             machine.getMachineDefinitionId(),
+            null,
+            null,
             machine.getCurrentStateId(),
             machine.getContext(),
             machine.getCreatedAt(),

@@ -71,7 +71,7 @@ class ReviewTask {
         initialContext.put("owner", "john");
 
         // Create machine instance
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         assertNotNull(machine);
         assertNotNull(machine.getId());
@@ -85,7 +85,7 @@ class ReviewTask {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Execute transition t0 (start -> one) - no condition
         MachineEntity updatedMachine = machineService.executeTransition(machine.getId(), "o_t0");
@@ -106,7 +106,7 @@ class ReviewTask {
         reqreviewers.add(new HashMap<String, Object>() {{ put("name", "jane"); }});
         reqreviewers.add(new HashMap<String, Object>() {{ put("name", "doe"); }});
         initialContext.put("reqreviewers", reqreviewers);
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Move to state "one" first
         MachineEntity updatedMachine = machineService.executeTransition(machine.getId(), "o_t0");
@@ -139,7 +139,7 @@ class ReviewTask {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("owner", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         assertEquals("start", machine.getCurrentStateId());
         assertEquals("john", machine.getContext().get("owner"));

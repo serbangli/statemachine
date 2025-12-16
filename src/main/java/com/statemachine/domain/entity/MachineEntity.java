@@ -21,8 +21,14 @@ public class MachineEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false)    
     private String machineDefinitionId;
+
+    @Column(nullable = true)
+    private String managedObjectId;
+    
+    @Column(nullable = true)
+    private String managedObjectType;
 
     @Column(nullable = false)
     private String currentStateId;
@@ -46,6 +52,19 @@ public class MachineEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public enum ManagedObjectType {
+        REVIEW_TASK("REVIEW_TASK"), TRANSLATE_TASK("TRANSLATE_TASK");
+        private String objectType;
+        private ManagedObjectType(String oType) {
+            this.objectType = oType;
+        }
+       
+        @Override
+        public String toString(){
+            return objectType;
+        }
     }
 }
 

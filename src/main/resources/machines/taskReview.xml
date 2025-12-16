@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<machine id="taskReview">    
+    <start id="IN_REVIEW" name="IN_REVIEW"/>  
+    <state id="REVIEWED" name="REVIEWED"/>    
+    <state id="REVIEW_CLOSED" name="REVIEW_CLOSED"/>
+    <state id="START_INTEGRATION" name="START_INTEGRATION"/>   
+    <end id="INTEGRATED" name="INTEGRATED"/>
+    
+    <transitions role="owner">
+        <transition id="o_t0" name="Add Reviewer" source="IN_REVIEW" destination="IN_REVIEW"/>       
+        <transition id="o_t1" name="Close Review" source="IN_REVIEW" destination="REVIEW_CLOSED"/>
+        <transition id="o_t2" name="Reopen Review" source="REVIEW_CLOSED" destination="IN_REVIEW"/>
+        <transition id="o_t3" name="Rollback Review" source="REVIEW_CLOSED" destination="IN_REVIEW"/>
+        <transition id="o_t4" name="Start Integration" source="REVIEW_CLOSED" destination="START_INTEGRATION"/>
+        <transition id="o_t5" name="Cancel Integration" source="START_INTEGRATION" destination="REVIEW_CLOSED"/>
+        <transition id="o_t6" name="Finish Integration" source="START_INTEGRATION" destination="INTEGRATED"/>               
+    </transitions>
+    
+    <transitions role="reviewer">        
+        <!-- {  
+     "reqreviewers" :[
+     {"name":"john"},
+     {"name":"doe"},
+     {"name":"jane"}
+     ],
+     
+  "reviewers": [    
+    {
+      "name": "john"
+    },
+    {
+      "name": "doe"
+    },
+    {
+      "name": "jane"
+    }
+  ]
+} 
+        -->
+        <transition id="r_t0" name="Finish review" source="IN_REVIEW" destination="REVIEW_CLOSED" >        
+            <condition>
+                reviewers.length === reqreviewers.length
+            </condition>        
+        </transition>      
+    </transitions>
+</machine>
+

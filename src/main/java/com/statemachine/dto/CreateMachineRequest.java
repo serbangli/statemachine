@@ -15,6 +15,12 @@ public class CreateMachineRequest {
     @Schema(description = "Machine definition ID", example = "task", required = true)
     private String machineDefinitionId;
     
+    @Schema(description = "Managed object ID", example = "1", required = true)
+    private String managedObjectId;
+    
+    @Schema(description = "Managed object type", example = "task", required = true)
+    private String managedObjectType;
+    
     @Schema(description = "Initial context for the machine instance (JSON object)", 
             example = "{\"name\": \"john\", \"role\": \"owner\"}")
     private Map<String, Object> initialContext;

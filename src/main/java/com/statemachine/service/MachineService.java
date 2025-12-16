@@ -40,7 +40,7 @@ public class MachineService {
     private MachineStateWebSocketHandler machineStateWebSocketHandler;
 
     @Transactional
-    public MachineEntity createMachineInstance(String machineDefinitionId, Map<String, Object> initialContext) {
+    public MachineEntity createMachineInstance(String machineDefinitionId, Map<String, Object> initialContext, String managedObjectId, String managedObjectType) {
         MachineDefinitionEntity definition = machineDefinitionService.getDefinition(machineDefinitionId)
                 .orElseThrow(
                         () -> new IllegalArgumentException("Machine definition not found: " + machineDefinitionId));
@@ -55,7 +55,8 @@ public class MachineService {
         machine.setMachineDefinitionId(machineDefinitionId);
         machine.setCurrentStateId(model.getStartState().getId());
         machine.setContext(initialContext != null ? new HashMap<>(initialContext) : new HashMap<>());
-
+        machine.setManagedObjectId(managedObjectId);
+        machine.setManagedObjectType(managedObjectType);
         machine = machineRepository.save(machine);
 
         // Record initial state in history
@@ -67,6 +68,10 @@ public class MachineService {
 
     public Optional<MachineEntity> getMachine(Long machineId) {
         return machineRepository.findById(machineId);
+    }
+    
+    public Optional<MachineEntity> getMachineByObject(String managedObjectId, String managedObjectType) {
+        return machineRepository.findByManagedObjectIdAndManagedObjectType(managedObjectId, managedObjectType);
     }
 
     public List<MachineEntity> getAllMachines() {

@@ -70,7 +70,7 @@ class StateMachineIntegrationTest {
         initialContext.put("name", "john");
 
         // Create machine instance
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         assertNotNull(machine);
         assertNotNull(machine.getId());
@@ -84,7 +84,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Execute transition t0 (start -> one) - no condition
         MachineEntity updatedMachine = machineService.executeTransition(machine.getId(), "t0");
@@ -97,7 +97,7 @@ class StateMachineIntegrationTest {
         // Create machine instance with context that meets condition
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Move to state "one" first
         machine = machineService.executeTransition(machine.getId(), "t0");
@@ -114,7 +114,7 @@ class StateMachineIntegrationTest {
         // Create machine instance with context that doesn't meet condition
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "jane"); // Not "john"
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Move to state "one" first
         MachineEntity machineInStateOne = machineService.executeTransition(machine.getId(), "t0");
@@ -133,7 +133,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Get available transitions from start state
         List<Transition> availableTransitions = machineService.getAvailableTransitions(machine.getId());
@@ -148,7 +148,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Move to state "one"
         MachineEntity machineInStateOne = machineService.executeTransition(machine.getId(), "t0");
@@ -167,7 +167,7 @@ class StateMachineIntegrationTest {
         // Create machine instance with context that doesn't meet condition
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "jane");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Move to state "one"
         MachineEntity machineInStateOne = machineService.executeTransition(machine.getId(), "t0");
@@ -184,7 +184,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "jane");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Update context
         Map<String, Object> contextUpdates = new HashMap<>();
@@ -202,7 +202,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Verify initial state
         assertEquals("start", machine.getCurrentStateId());
@@ -225,7 +225,7 @@ class StateMachineIntegrationTest {
         // Create machine instance
         Map<String, Object> initialContext = new HashMap<>();
         initialContext.put("name", "john");
-        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext);
+        MachineEntity machine = machineService.createMachineInstance(machineDefinitionId, initialContext, null, null);
 
         // Try to execute transition t1 from start state (should fail)
         assertThrows(IllegalStateException.class, () -> {

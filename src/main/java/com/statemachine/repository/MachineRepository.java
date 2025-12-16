@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface MachineRepository extends JpaRepository<MachineEntity, Long> {
     @NonNull
     Optional<MachineEntity> findById(@NonNull Long id);
+    @NonNull
+    Optional<MachineEntity> findByManagedObjectIdAndManagedObjectType(String managedObjectId, String managedObjectType);
     List<MachineEntity> findByMachineDefinitionId(String machineDefinitionId);
 }
-
