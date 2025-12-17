@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import lombok.extern.slf4j.Slf4j;
 import com.statemachine.websocket.MachineStateWebSocketHandler;
@@ -38,6 +40,9 @@ public class MachineService {
 
     @Autowired
     private MachineStateWebSocketHandler machineStateWebSocketHandler;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
     public MachineEntity createMachineInstance(String machineDefinitionId, Map<String, Object> initialContext, String managedObjectId, String managedObjectType) {
@@ -117,8 +122,7 @@ public class MachineService {
                     transition.getCondition().getExpression(),
                     machine.getContext());
             if (!conditionMet) {
-                throw new IllegalStateException(
-                        "Transition condition not met: " + transition.getCondition().getExpression());
+                log.debug("Transition condition not met: {} for trasitionID {}",  transition.getCondition().getExpression(), transitionId);
             }
         } else {
             log.debug("no condition, executing transition");
@@ -133,6 +137,7 @@ public class MachineService {
             // Execute transition
             machine.setCurrentStateId(destinationStateId);
             machine = machineRepository.save(machine);
+
 
             // Record history entry
             recordHistory(machine.getId(), fromStateId, destinationStateId,
@@ -161,13 +166,17 @@ public class MachineService {
         MachineEntity machine = machineRepository.findById(machineId)
                 .orElseThrow(() -> new IllegalArgumentException("Machine not found: " + machineId));
 
-        if (machine.getContext() == null) {
-            machine.setContext(new HashMap<>());
+        // Create a new HashMap to ensure Hibernate detects the change
+        Map<String, Object> updatedContext = new HashMap<>();
+        if (machine.getContext() != null) {
+            updatedContext.putAll(machine.getContext());
         }
-
-        // Update context directly - JSON storage handles serialization automatically
-        machine.getContext().putAll(contextUpdates);
-        machine = machineRepository.save(machine);
+        
+        // Merge the context updates
+        updatedContext.putAll(contextUpdates);
+        
+        // Set the new context map to ensure Hibernate dirty checking works
+        machine.setContext(updatedContext);
 
         // Record a history entry for this context update (even if state does not
         // change)
@@ -192,26 +201,38 @@ public class MachineService {
         } catch (Exception e) {
             log.warn("Failed to broadcast machine state change over WebSocket", e);
         }
-        // After updating context, check for available transitions and navigate
-        // automatically
-        List<Transition> availableTransitions = getAvailableTransitionsInternal(machine, role);
+        
+        // Save and flush to ensure context is persisted immediately
+        machine = machineRepository.save(machine);
+        
+                    
+entityManager.flush();
+entityManager.clear();
 
-        if (availableTransitions.isEmpty()) {
-            // No transitions available, just return the updated machine
-            return machine;
-        } else if (availableTransitions.size() == 1) {
-            // Exactly one transition available, execute it automatically
-            Transition transition = availableTransitions.get(0);
-            log.info("Auto-executing transition {} after context update", transition.getId());
-            return executeTransition(machineId, transition.getId());
-        } else {
-            // Multiple transitions available, log WARN and let user select
-            log.warn("Multiple transitions available ({} transitions) after context update for machine {}. " +
-                    "User must select which transition to execute. Available transitions: {}",
-                    availableTransitions.size(), machineId,
-                    availableTransitions.stream().map(Transition::getId).toList());
-            return machine;
-        }
+MachineEntity fromDb = machineRepository.findById(machine.getId()).orElseThrow();
+log.debug("### after save : machine: {} context: {}", fromDb.getId(), fromDb.getContext());
+
+        return machine;
+        // // After updating context, check for available transitions and navigate
+        // // automatically
+        // List<Transition> availableTransitions = getAvailableTransitionsInternal(machine, role);
+
+        // if (availableTransitions.isEmpty()) {
+        //     // No transitions available, just return the updated machine
+        //     return machine;
+        // } else if (availableTransitions.size() == 1) {
+        //     // Exactly one transition available, execute it automatically
+        //     Transition transition = availableTransitions.get(0);
+        //     log.info("Auto-executing transition {} after context update", transition.getId());
+        //     return executeTransition(machineId, transition.getId());
+        // } else {
+        //     // Multiple transitions available, log WARN and let user select
+        //     log.warn("Multiple transitions available ({} transitions) after context update for machine {}. " +
+        //             "User must select which transition to execute. Available transitions: {}",
+        //             availableTransitions.size(), machineId,
+        //             availableTransitions.stream().map(Transition::getId).toList());
+        //     return machine;
+        // }
     }
 
     public List<Transition> getAvailableTransitions(@NonNull Long machineId) {

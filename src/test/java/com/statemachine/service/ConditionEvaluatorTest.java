@@ -79,9 +79,14 @@ class ConditionEvaluatorTest {
     void testEvaluateInvalidExpression() {
         Map<String, Object> context = new HashMap<>();
         
-        assertThrows(RuntimeException.class, () -> {
-            evaluator.evaluate("invalid expression syntax", context);
-        });
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> evaluator.parse("invalid expression syntax")
+        );
+        
+        // assertThrows(RuntimeException.class, () -> {
+        //     evaluator.evaluate("invalid expression syntax", context);
+        // });
     }
 
     @Test

@@ -15,4 +15,5 @@ public interface MachineRepository extends JpaRepository<MachineEntity, Long> {
     @NonNull
     Optional<MachineEntity> findByManagedObjectIdAndManagedObjectType(String managedObjectId, String managedObjectType);
     List<MachineEntity> findByMachineDefinitionId(String machineDefinitionId);
+        
 }

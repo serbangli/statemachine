@@ -15,6 +15,17 @@ import java.util.Map;
 @Slf4j
 public class ConditionEvaluator {
 
+    public String parse(String expression) {
+        try (Context polyglotContext = Context.newBuilder("js")
+        .option("engine.WarnInterpreterOnly", "false")
+        .build()) {
+            polyglotContext.eval("js", expression);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid expression: " + expression, e);
+        }
+        return expression;
+    }
+
     public boolean evaluate(String conditionExpression, Map<String, Object> context) {
         if (conditionExpression == null || conditionExpression.trim().isEmpty()) {
             return true; // No condition means always true
