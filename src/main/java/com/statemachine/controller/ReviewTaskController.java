@@ -226,22 +226,17 @@ public class ReviewTaskController {
             MachineEntity machine = machineService
                     .getMachineByObject(request.getTaskId(), MachineEntity.ManagedObjectType.REVIEW_TASK.toString())
                     .orElseThrow(() -> new IllegalArgumentException("Task not found"));
-            try {
                 machine = machineService.updateContext(machine.getId(),
                         (context != null ? context : machine.getContext()), role);
 
                 machine = machineService.executeTransition(machine.getId(), transitionId);
 
-                return ResponseEntity.ok(convertToResponse(machine));
-            } catch (IllegalArgumentException e) {
-                log.debug(e.getMessage(), e);
-                return ResponseEntity.notFound().build();
-            }
-
-        } catch (Exception e) {
-            log.debug(e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.ok(convertToResponse(machine));            
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.notFound().build();
         }
+
     }
 
     @ApiResponses(value = {

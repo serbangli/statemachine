@@ -214,8 +214,8 @@ public class MachineController {
         return new MachineResponse(
             machine.getId(),
             machine.getMachineDefinitionId(),
-            null,
-            null,
+            machine.getManagedObjectId(),
+            machine.getManagedObjectType(),
             machine.getCurrentStateId(),
             machine.getContext(),
             machine.getCreatedAt(),
