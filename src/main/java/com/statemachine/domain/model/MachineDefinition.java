@@ -7,10 +7,13 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.validation.constraints.NotNull;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class MachineDefinition {
+    @NotNull
     private String id;
     private String name;
     private State startState;

@@ -12,13 +12,13 @@ import java.util.Map;
 @AllArgsConstructor
 @Schema(description = "Request to create a new machine instance")
 public class CreateMachineRequest {
-    @Schema(description = "Machine definition ID", example = "task", required = true)
+    @Schema(description = "Machine definition ID", example = "task", requiredMode = Schema.RequiredMode.REQUIRED)
     private String machineDefinitionId;
     
-    @Schema(description = "Managed object ID", example = "1", required = true)
+    @Schema(description = "Managed object ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     private String managedObjectId;
     
-    @Schema(description = "Managed object type", example = "task", required = true)
+    @Schema(description = "Managed object type", example = "task", requiredMode = Schema.RequiredMode.REQUIRED)
     private String managedObjectType;
     
     @Schema(description = "Initial context for the machine instance (JSON object)", 

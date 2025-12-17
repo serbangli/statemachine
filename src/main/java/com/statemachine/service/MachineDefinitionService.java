@@ -43,10 +43,15 @@ public class MachineDefinitionService {
         
         MachineDefinition machineDefinition = xmlMachineParser.parse(inputStream);
         
+        String machineDefinitionId = machineDefinition.getId();
+        if (machineDefinitionId == null) {
+            throw new IllegalArgumentException("Machine definition id is required");
+        }
+        
         // Check if definition already exists
-        Optional<MachineDefinitionEntity> existing = machineDefinitionRepository.findById(machineDefinition.getId());
+        Optional<MachineDefinitionEntity> existing = machineDefinitionRepository.findById(machineDefinitionId);
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("Machine definition with id " + machineDefinition.getId() + " already exists");
+            throw new IllegalArgumentException("Machine definition with id " + machineDefinitionId + " already exists");
         }
 
         // Convert to entity and save
@@ -59,10 +64,15 @@ public class MachineDefinitionService {
         InputStream inputStream = new java.io.ByteArrayInputStream(xmlContent.getBytes());
         MachineDefinition machineDefinition = xmlMachineParser.parse(inputStream);
         
+        String machineDefinitionId = machineDefinition.getId();
+        if (machineDefinitionId == null) {
+            throw new IllegalArgumentException("Machine definition id is required");
+        }
+        
         // Check if definition already exists
-        Optional<MachineDefinitionEntity> existing = machineDefinitionRepository.findById(machineDefinition.getId());
+        Optional<MachineDefinitionEntity> existing = machineDefinitionRepository.findById(machineDefinitionId);
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("Machine definition with id " + machineDefinition.getId() + " already exists");
+            throw new IllegalArgumentException("Machine definition with id " + machineDefinitionId + " already exists");
         }
 
         // Convert to entity and save

@@ -1,15 +1,10 @@
 package com.statemachine.controller;
 
 import com.statemachine.domain.model.Transition;
-import com.statemachine.dto.CreateMachineRequest;
-import com.statemachine.dto.MachineResponse;
-import com.statemachine.dto.TransitionRequest;
 import com.statemachine.dto.task.TaskReviewRequest;
 import com.statemachine.dto.task.TaskReviewerRequest;
 import com.statemachine.dto.task.TaskReviewResponse;
-import com.statemachine.dto.UpdateContextRequest;
 import com.statemachine.domain.entity.MachineEntity;
-import com.statemachine.domain.entity.MachineHistoryEntity;
 import com.statemachine.service.MachineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +23,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tasks")

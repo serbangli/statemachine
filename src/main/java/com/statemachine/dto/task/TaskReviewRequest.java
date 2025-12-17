@@ -15,6 +15,6 @@ public class TaskReviewRequest {
     @Schema(description = "Owner ID", example = "john@example.com")
     private String ownerId;
 
-    @Schema(description = "Machine definition ID", example = "task", required = true)
+    @Schema(description = "Machine definition ID", example = "task", requiredMode = Schema.RequiredMode.REQUIRED)
     private String machineDefinitionId;    
 }
