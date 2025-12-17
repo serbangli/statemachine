@@ -15,8 +15,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import lombok.extern.slf4j.Slf4j;
-import com.statemachine.websocket.MachineStateWebSocketHandler;
-import com.statemachine.websocket.MachineStateWebSocketHandler.MachineStateChangeMessage;
+import com.statemachine.listener.MachineStateChangeListenerRegistry;
+import com.statemachine.listener.event.MachineStateChangeEvent;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class MachineService {
     private ConditionEvaluator conditionEvaluator;
 
     @Autowired
-    private MachineStateWebSocketHandler machineStateWebSocketHandler;
+    private MachineStateChangeListenerRegistry listenerRegistry;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -67,6 +68,10 @@ public class MachineService {
         // Record initial state in history
         recordHistory(machine.getId(), null, model.getStartState().getId(),
                 "INITIAL", new HashMap<>(machine.getContext()));
+                
+                // Notify all registered listeners about the state change
+            notifyStateChange(machine, model.getStartState().getId(), model.getStartState().getId(), 
+            "INITIAL", MachineStateChangeEvent.EventType.INITIAL, null);
 
         return machine;
     }
@@ -143,19 +148,9 @@ public class MachineService {
             recordHistory(machine.getId(), fromStateId, destinationStateId,
                     transitionId, contextSnapshot);
 
-            // Notify WebSocket listeners about the state change
-            try {
-                MachineStateChangeMessage msg = new MachineStateChangeMessage(
-                        machine.getId(),
-                        fromStateId,
-                        destinationStateId,
-                        transitionId,
-                        "STATE_CHANGED",
-                        machine.getContext());
-                machineStateWebSocketHandler.broadcastStateChange(msg);
-            } catch (Exception e) {
-                log.warn("Failed to broadcast machine state change over WebSocket", e);
-            }
+            // Notify all registered listeners about the state change
+            notifyStateChange(machine, fromStateId, destinationStateId, 
+                    transitionId, MachineStateChangeEvent.EventType.STATE_CHANGED, null);
         }
 
         return machine;
@@ -188,29 +183,17 @@ public class MachineService {
                 "CONTEXT_UPDATE",
                 new HashMap<>(machine.getContext()));
 
-        // Notify WebSocket listeners about the state change
-        try {
-            MachineStateChangeMessage msg = new MachineStateChangeMessage(
-                    machine.getId(),
-                    machine.getCurrentStateId(),
-                    machine.getCurrentStateId(),
-                    null,
-                    "CONTEXT_UPDATE",
-                    machine.getContext());
-            machineStateWebSocketHandler.broadcastStateChange(msg);
-        } catch (Exception e) {
-            log.warn("Failed to broadcast machine state change over WebSocket", e);
-        }
-        
         // Save and flush to ensure context is persisted immediately
         machine = machineRepository.save(machine);
-        
-                    
-entityManager.flush();
-entityManager.clear();
+        entityManager.flush();
+        entityManager.clear();
 
-MachineEntity fromDb = machineRepository.findById(machine.getId()).orElseThrow();
-log.debug("### after save : machine: {} context: {}", fromDb.getId(), fromDb.getContext());
+        MachineEntity fromDb = machineRepository.findById(machine.getId()).orElseThrow();
+        log.debug("### after save : machine: {} context: {}", fromDb.getId(), fromDb.getContext());
+
+        // Notify all registered listeners about the context update
+        notifyStateChange(machine, machine.getCurrentStateId(), machine.getCurrentStateId(),
+                null, MachineStateChangeEvent.EventType.CONTEXT_UPDATE, role);
 
         return machine;
         // // After updating context, check for available transitions and navigate
@@ -436,6 +419,39 @@ log.debug("### after save : machine: {} context: {}", fromDb.getId(), fromDb.get
      */
     public List<MachineHistoryEntity> getMachineHistoryDesc(Long machineId) {
         return machineHistoryRepository.findByMachineIdOrderByTimestampDesc(machineId);
+    }
+
+    /**
+     * Notifies all registered listeners about a machine state change.
+     * 
+     * @param machine The machine entity
+     * @param fromStateId The previous state ID (null for initial state)
+     * @param toStateId The new state ID
+     * @param transitionId The transition ID that caused the change (null for context updates)
+     * @param eventType The type of event
+     * @param role The role that triggered the change (if applicable)
+     */
+    private void notifyStateChange(MachineEntity machine, String fromStateId, String toStateId,
+            String transitionId, MachineStateChangeEvent.EventType eventType, String role) {
+        try {
+            MachineStateChangeEvent event = MachineStateChangeEvent.builder()
+                    .machineId(machine.getId())
+                    .managedObjectId(machine.getManagedObjectId())
+                    .managedObjectType(machine.getManagedObjectType())
+                    .machineDefinitionId(machine.getMachineDefinitionId())
+                    .fromStateId(fromStateId)
+                    .toStateId(toStateId)
+                    .transitionId(transitionId)
+                    .eventType(eventType)
+                    .machineContext(new HashMap<>(machine.getContext()))
+                    .timestamp(LocalDateTime.now())
+                    .role(role)
+                    .build();
+
+            listenerRegistry.notifyListeners(event);
+        } catch (Exception e) {
+            log.warn("Failed to notify listeners about machine state change: {}", e.getMessage(), e);
+        }
     }
 
 }
