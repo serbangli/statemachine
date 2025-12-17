@@ -35,7 +35,14 @@
     {
       "name": "jane"
     }
-  ]
+  ],
+  "user":{
+    "id":"gigi@0o.ro",
+    "name":"gigi",
+    "role":"reviewer",
+    "group":"qa"
+  },
+  ""
 } 
         -->
         <transition id="r_t0" name="Finish review" source="IN_REVIEW" destination="REVIEW_CLOSED" >        

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Task Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Review Task Manager</h1>
+            <p>Manage review tasks and their state machine workflows</p>
+            <p>
+                <a href="index.html" style="color: white; text-decoration: underline;">State Machine Manager</a> | 
+                <a href="http://localhost:8080/swagger-ui/index.html#/" target="_blank" style="color: white; text-decoration: underline;">API Documentation</a>
+            </p>
+        </header>
+
+        <div class="main-content">
+            <!-- Create Task Section -->
+            <section class="card">
+                <h2>Create Review Task</h2>
+                <div class="form-group">
+                    <label for="taskId">Task ID:</label>
+                    <input type="text" id="taskId" placeholder="task-001" value="task-001">
+                </div>
+                <div class="form-group">
+                    <label for="ownerId">Owner ID:</label>
+                    <input type="text" id="ownerId" placeholder="owner@example.com" value="owner@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="machineDefinitionId">Machine Definition ID:</label>
+                    <input type="text" id="machineDefinitionId" placeholder="task" value="task">
+                </div>
+                <button onclick="createTask()" class="btn-primary">Create Task</button>
+                <div id="createTaskResult" class="result-message"></div>
+            </section>
+
+            <!-- Load Task Section -->
+            <section class="card">
+                <h2>Load Task</h2>
+                <div class="form-group">
+                    <label for="loadTaskId">Task ID:</label>
+                    <div class="input-group">
+                        <input type="text" id="loadTaskId" placeholder="task-001">
+                        <button onclick="loadTask()" class="btn-primary">Load Task</button>
+                    </div>
+                </div>
+                <div id="taskDetails" class="details-panel" style="display: none;">
+                    <h3>Task Information</h3>
+                    <div class="state-display">
+                        <h3>Current State: <span id="currentTaskState" class="state-badge"></span></h3>
+                    </div>
+                    <div class="form-group">
+                        <label>Machine ID:</label>
+                        <div id="taskMachineId" class="json-display"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Context:</label>
+                        <div id="taskContext" class="context-display"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Created:</label>
+                        <div id="taskCreated" class="json-display"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Updated:</label>
+                        <div id="taskUpdated" class="json-display"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Reviewer Section -->
+            <section class="card" id="addReviewerSection" style="display: none;">
+                <h2>Add Reviewer</h2>
+                <div class="form-group">
+                    <label for="reviewerId">Reviewer ID:</label>
+                    <input type="text" id="reviewerId" placeholder="reviewer-001">
+                </div>
+                <div class="form-group">
+                    <label for="reviewerName">Reviewer Name:</label>
+                    <input type="text" id="reviewerName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="reviewerEmail">Reviewer Email:</label>
+                    <input type="text" id="reviewerEmail" placeholder="john.doe@example.com">
+                </div>
+                <button onclick="addReviewer()" class="btn-primary">Add Reviewer</button>
+                <div id="addReviewerResult" class="result-message"></div>
+            </section>
+
+            <!-- Submit Review Section -->
+            <section class="card" id="submitReviewSection" style="display: none;">
+                <h2>Submit Review</h2>
+                <div class="form-group">
+                    <label for="reviewReviewerId">Reviewer ID:</label>
+                    <input type="text" id="reviewReviewerId" placeholder="reviewer-001">
+                </div>
+                <div class="form-group">
+                    <label for="reviewReviewerName">Reviewer Name:</label>
+                    <input type="text" id="reviewReviewerName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="reviewReviewerEmail">Reviewer Email:</label>
+                    <input type="text" id="reviewReviewerEmail" placeholder="john.doe@example.com">
+                </div>
+                <button onclick="submitReview()" class="btn-primary">Submit Review</button>
+                <div id="submitReviewResult" class="result-message"></div>
+            </section>
+
+            <!-- Owner Actions Section -->
+            <section class="card" id="ownerActionsSection" style="display: none;">
+                <h2>Owner Actions</h2>
+                <div class="form-group">
+                    <button onclick="closeReview()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Close Review</button>
+                    <button onclick="reopenReview()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Reopen Review</button>
+                    <button onclick="rollbackReview()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Rollback Review</button>
+                </div>
+                <div class="form-group">
+                    <h3 style="margin-bottom: 10px;">Integration Actions</h3>
+                    <button onclick="startIntegration()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Start Integration</button>
+                    <button onclick="cancelIntegration()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Cancel Integration</button>
+                    <button onclick="finishIntegration()" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Finish Integration</button>
+                </div>
+                <div id="ownerActionsResult" class="result-message"></div>
+            </section>
+
+            <!-- Available Transitions Section -->
+            <section class="card" id="transitionsSection" style="display: none;">
+                <h2>Available Transitions</h2>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label>Filter by Role:</label>
+                        <div>
+                            <select id="transitionRoleFilter" onchange="loadAvailableTransitions()" style="margin-right: 10px;">
+                                <option value="">All Roles</option>
+                                <option value="owner">Owner</option>
+                                <option value="reviewer">Reviewer</option>
+                            </select>
+                            <button onclick="loadAvailableTransitions()" class="btn-secondary">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="availableTransitionsList" class="transitions-list"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Messages -->
+        <div id="messageContainer" class="message-container"></div>
+    </div>
+
+    <script src="review-tasks.js"></script>
+</body>
+</html>
