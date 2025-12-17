@@ -47,7 +47,7 @@ public class MachineDefinitionService {
         if (machineDefinitionId == null) {
             throw new IllegalArgumentException("Machine definition id is required");
         }
-        
+              
         // Check if definition already exists
         Optional<MachineDefinitionEntity> existing = machineDefinitionRepository.findById(machineDefinitionId);
         if (existing.isPresent()) {
