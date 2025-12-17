@@ -102,12 +102,14 @@ async function loadTask() {
     }
 
     try {
+        currentTaskId = taskId;
+        
         // We need to get the task details. Since there's no direct GET endpoint,
         // we'll try to get available transitions which will validate the task exists
         // and we can infer the task state from the response
+        // This will also update the owner action button states
         await loadAvailableTransitions();
         
-        currentTaskId = taskId;
         showMessage(`Task "${taskId}" loaded successfully!`, 'success');
         
         // Show all sections
@@ -122,6 +124,9 @@ async function loadTask() {
     } catch (error) {
         showMessage(`Error loading task: ${error.message}`, 'error');
         document.getElementById('taskDetails').style.display = 'none';
+        // Disable all buttons on error
+        updateOwnerActionButtons([]);
+        updateReviewerActionButtons([], []);
     }
 }
 
@@ -186,7 +191,7 @@ async function addReviewer() {
         // Update task details
         updateTaskDisplay(result);
         
-        // Refresh available transitions
+        // Refresh available transitions (this will also update button states)
         await loadAvailableTransitions();
     } catch (error) {
         showMessage(`Error adding reviewer: ${error.message}`, 'error');
@@ -225,7 +230,7 @@ async function submitReview() {
         // Update task details
         updateTaskDisplay(result);
         
-        // Refresh available transitions
+        // Refresh available transitions (this will also update button states)
         await loadAvailableTransitions();
     } catch (error) {
         showMessage(`Error submitting review: ${error.message}`, 'error');
@@ -353,6 +358,19 @@ async function loadAvailableTransitions() {
     }
 
     try {
+        // Get transitions filtered by owner role to determine which buttons to enable
+        const ownerTransitions = await apiCall(`/${currentTaskId}/transitions/available?role=owner`);
+        
+        // Get transitions filtered by reviewer role
+        const reviewerTransitions = await apiCall(`/${currentTaskId}/transitions/available?role=reviewer`);
+        
+        // Update owner action buttons based on available transitions
+        updateOwnerActionButtons(ownerTransitions || []);
+        
+        // Update reviewer action buttons based on available transitions
+        updateReviewerActionButtons(reviewerTransitions || [], ownerTransitions || []);
+        
+        // Display all available transitions (respecting role filter)
         const roleFilter = document.getElementById('transitionRoleFilter').value;
         const endpoint = `/${currentTaskId}/transitions/available${roleFilter ? `?role=${roleFilter}` : ''}`;
         const transitions = await apiCall(endpoint);
@@ -402,6 +420,92 @@ async function loadAvailableTransitions() {
     } catch (error) {
         const transitionsList = document.getElementById('availableTransitionsList');
         transitionsList.innerHTML = `<p style="color: #dc3545; padding: 10px;">Error loading transitions: ${error.message}</p>`;
+        // Disable all buttons on error
+        updateOwnerActionButtons([]);
+        updateReviewerActionButtons([], []);
+    }
+}
+
+// Update Owner Action Buttons based on available transitions
+function updateOwnerActionButtons(availableTransitions) {
+    // Map transition IDs to button IDs
+    const transitionToButtonMap = {
+        'o_t1': 'btnCloseReview',
+        'o_t2': 'btnReopenReview',        
+        'o_t3': 'btnRollbackReview',
+        'o_t4': 'btnStartIntegration',
+        'o_t5': 'btnCancelIntegration',
+        'o_t6': 'btnFinishIntegration'
+    };
+    
+    // Create a set of available transition IDs for quick lookup
+    const availableTransitionIds = new Set(availableTransitions.map(t => t.id));
+    
+    // Update each button
+    Object.entries(transitionToButtonMap).forEach(([transitionId, buttonId]) => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            const isAvailable = availableTransitionIds.has(transitionId);
+            button.disabled = !isAvailable;
+            
+            // Update visual style based on availability
+            if (isAvailable) {
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+                button.title = '';
+            } else {
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+                button.title = 'This action is not available in the current state';
+            }
+        }
+    });
+}
+
+// Update Reviewer Action Buttons based on available transitions
+function updateReviewerActionButtons(reviewerTransitions, ownerTransitions) {
+    // Map transition IDs to button IDs
+    // o_t0 is used for adding reviewer (owner action that triggers when reviewer is added)
+    // r_t0 is used for submitting review (reviewer action)
+    const addReviewerTransitionIds = ['o_t0']; // Owner transition triggered when adding reviewer
+    const submitReviewTransitionIds = ['r_t0', 'r_t2']; // Reviewer transitions for submitting review
+    
+    // Create sets of available transition IDs for quick lookup
+    const availableReviewerTransitionIds = new Set(reviewerTransitions.map(t => t.id));
+    const availableOwnerTransitionIds = new Set(ownerTransitions.map(t => t.id));
+    
+    // Update Add Reviewer button (check if o_t0 is available in owner transitions)
+    const addReviewerButton = document.getElementById('btnAddReviewer');
+    if (addReviewerButton) {
+        const isAddReviewerAvailable = addReviewerTransitionIds.some(id => availableOwnerTransitionIds.has(id));
+        addReviewerButton.disabled = !isAddReviewerAvailable;
+        
+        if (isAddReviewerAvailable) {
+            addReviewerButton.style.opacity = '1';
+            addReviewerButton.style.cursor = 'pointer';
+            addReviewerButton.title = '';
+        } else {
+            addReviewerButton.style.opacity = '0.5';
+            addReviewerButton.style.cursor = 'not-allowed';
+            addReviewerButton.title = 'Adding reviewer is not available in the current state';
+        }
+    }
+    
+    // Update Submit Review button (check if reviewer transitions are available)
+    const submitReviewButton = document.getElementById('btnSubmitReview');
+    if (submitReviewButton) {
+        const isSubmitReviewAvailable = submitReviewTransitionIds.some(id => availableReviewerTransitionIds.has(id));
+        submitReviewButton.disabled = !isSubmitReviewAvailable;
+        
+        if (isSubmitReviewAvailable) {
+            submitReviewButton.style.opacity = '1';
+            submitReviewButton.style.cursor = 'pointer';
+            submitReviewButton.title = '';
+        } else {
+            submitReviewButton.style.opacity = '0.5';
+            submitReviewButton.style.cursor = 'not-allowed';
+            submitReviewButton.title = 'Submitting review is not available in the current state';
+        }
     }
 }
 
