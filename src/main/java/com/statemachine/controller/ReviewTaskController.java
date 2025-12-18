@@ -106,7 +106,7 @@ public class ReviewTaskController {
 		boolean toReturn = false;
 
 		// Update the context with the new reviewer
-		if (null!=ctxKey && ctxKey.trim().length()>0 && ctxMap.containsKey(ctxKey)) {
+		if (null != ctxKey && ctxKey.trim().length() > 0 && ctxMap.containsKey(ctxKey)) {
 			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> existingReviewers = (List<Map<String, Object>>) ctxMap.get(ctxKey);
 			toReturn = itemMapExists(existingReviewers, item);
@@ -280,6 +280,7 @@ public class ReviewTaskController {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Review successfully", content = @Content(schema = @Schema(implementation = TaskReviewResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Invalid request or machine definition not found") })
@@ -295,8 +296,13 @@ public class ReviewTaskController {
 			newReviewer.put("name", request.getUserName());
 			newReviewer.put("email", request.getUserEmail());
 			newReviewer.put("id", request.getUserId());
-
 			Map<String, Object> initialContext = getNewMap(machine.getContext());
+
+			if (initialContext.containsKey("reqreviewers") && ((List<Map<String,Object>>)initialContext.get("reqreviewers")).size() > 0
+					&& !isInContext(initialContext, newReviewer, "reqreviewers")) {
+				log.warn("User {} tried to add a review, but it is not in designated reviewers",newReviewer);
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			}
 
 			addToContext(initialContext, newReviewer, "reviewers");
 			// Update and save the context in the machine instance

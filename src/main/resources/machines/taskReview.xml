@@ -1,4 +1,4 @@
-<machine id="taskReviewL">    
+<machine id="taskReview">    
   <start id="IN_REVIEW" name="IN_REVIEW"/>  
   <state id="REVIEWED" name="REVIEWED"/>    
   <state id="REVIEW_CLOSED" name="REVIEW_CLOSED"/>
