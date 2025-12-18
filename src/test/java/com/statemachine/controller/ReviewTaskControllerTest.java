@@ -3,7 +3,7 @@ package com.statemachine.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.statemachine.dto.task.TaskReviewRequest;
-import com.statemachine.dto.task.TaskReviewerRequest;
+import com.statemachine.dto.task.TaskUserRequest;
 import com.statemachine.service.MachineDefinitionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,11 +82,11 @@ class ReviewTaskControllerTest {
         // First create a task
         createTask();
 
-        TaskReviewerRequest reviewerRequest = new TaskReviewerRequest();
+        TaskUserRequest reviewerRequest = new TaskUserRequest();
         reviewerRequest.setTaskId(taskId);
-        reviewerRequest.setReviewerId("reviewer-001");
-        reviewerRequest.setReviewerName("John Doe");
-        reviewerRequest.setReviewerEmail("john.doe@example.com");
+        reviewerRequest.setUserId("reviewer-001");
+        reviewerRequest.setUserName("John Doe");
+        reviewerRequest.setUserEmail("john.doe@example.com");
 
         mockMvc.perform(post("/api/tasks/" + taskId + "/reviewer")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -98,11 +98,11 @@ class ReviewTaskControllerTest {
 
     @Test
     void testAddReviewerToNonExistentTask() throws Exception {
-        TaskReviewerRequest reviewerRequest = new TaskReviewerRequest();
+        TaskUserRequest reviewerRequest = new TaskUserRequest();
         reviewerRequest.setTaskId("non-existent-task");
-        reviewerRequest.setReviewerId("reviewer-001");
-        reviewerRequest.setReviewerName("John Doe");
-        reviewerRequest.setReviewerEmail("john.doe@example.com");
+        reviewerRequest.setUserId("reviewer-001");
+        reviewerRequest.setUserName("John Doe");
+        reviewerRequest.setUserEmail("john.doe@example.com");
 
         mockMvc.perform(post("/api/tasks/non-existent-task/reviewer")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -115,11 +115,11 @@ class ReviewTaskControllerTest {
         // First create a task
         createTask();
 
-        TaskReviewerRequest reviewRequest = new TaskReviewerRequest();
+        TaskUserRequest reviewRequest = new TaskUserRequest();
         reviewRequest.setTaskId(taskId);
-        reviewRequest.setReviewerId("reviewer-001");
-        reviewRequest.setReviewerName("John Doe");
-        reviewRequest.setReviewerEmail("john.doe@example.com");
+        reviewRequest.setUserId("reviewer-001");
+        reviewRequest.setUserName("John Doe");
+        reviewRequest.setUserEmail("john.doe@example.com");
 
         mockMvc.perform(post("/api/tasks/" + taskId + "/review")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -131,11 +131,11 @@ class ReviewTaskControllerTest {
 
     @Test
     void testSubmitReviewToNonExistentTask() throws Exception {
-        TaskReviewerRequest reviewRequest = new TaskReviewerRequest();
+        TaskUserRequest reviewRequest = new TaskUserRequest();
         reviewRequest.setTaskId("non-existent-task");
-        reviewRequest.setReviewerId("reviewer-001");
-        reviewRequest.setReviewerName("John Doe");
-        reviewRequest.setReviewerEmail("john.doe@example.com");
+        reviewRequest.setUserId("reviewer-001");
+        reviewRequest.setUserName("John Doe");
+        reviewRequest.setUserEmail("john.doe@example.com");
 
         mockMvc.perform(post("/api/tasks/non-existent-task/review")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -275,11 +275,11 @@ class ReviewTaskControllerTest {
         assertNotNull(taskResponse.get("machineId"));
 
         // Add reviewer
-        TaskReviewerRequest reviewerRequest = new TaskReviewerRequest();
+        TaskUserRequest reviewerRequest = new TaskUserRequest();
         reviewerRequest.setTaskId(taskId);
-        reviewerRequest.setReviewerId("reviewer-001");
-        reviewerRequest.setReviewerName("John Doe");
-        reviewerRequest.setReviewerEmail("john.doe@example.com");
+        reviewerRequest.setUserId("reviewer-001");
+        reviewerRequest.setUserName("John Doe");
+        reviewerRequest.setUserEmail("john.doe@example.com");
 
         response = mockMvc.perform(post("/api/tasks/" + taskId + "/reviewer")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -307,11 +307,11 @@ class ReviewTaskControllerTest {
         createTask();
 
         // Add first reviewer
-        TaskReviewerRequest reviewerRequest1 = new TaskReviewerRequest();
+        TaskUserRequest reviewerRequest1 = new TaskUserRequest();
         reviewerRequest1.setTaskId(taskId);
-        reviewerRequest1.setReviewerId("reviewer-001");
-        reviewerRequest1.setReviewerName("John Doe");
-        reviewerRequest1.setReviewerEmail("john.doe@example.com");
+        reviewerRequest1.setUserId("reviewer-001");
+        reviewerRequest1.setUserName("John Doe");
+        reviewerRequest1.setUserEmail("john.doe@example.com");
 
         mockMvc.perform(post("/api/tasks/" + taskId + "/reviewer")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -319,11 +319,11 @@ class ReviewTaskControllerTest {
                 .andExpect(status().isOk());
 
         // Add second reviewer
-        TaskReviewerRequest reviewerRequest2 = new TaskReviewerRequest();
+        TaskUserRequest reviewerRequest2 = new TaskUserRequest();
         reviewerRequest2.setTaskId(taskId);
-        reviewerRequest2.setReviewerId("reviewer-002");
-        reviewerRequest2.setReviewerName("Jane Smith");
-        reviewerRequest2.setReviewerEmail("jane.smith@example.com");
+        reviewerRequest2.setUserId("reviewer-002");
+        reviewerRequest2.setUserName("Jane Smith");
+        reviewerRequest2.setUserEmail("jane.smith@example.com");
 
         String response = mockMvc.perform(post("/api/tasks/" + taskId + "/reviewer")
                 .contentType(MediaType.APPLICATION_JSON)

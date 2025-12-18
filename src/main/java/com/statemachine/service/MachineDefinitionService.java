@@ -148,6 +148,8 @@ public class MachineDefinitionService {
                 transitionEntity.setName(transition.getName());
                 transitionEntity.setSourceStateId(transition.getSourceStateId());
                 transitionEntity.setDestinationStateId(transition.getDestinationStateId());
+                transitionEntity.setSingleActionPerUser((null == transition.getSingleActionPerUser() ? "false" : transition.getSingleActionPerUser()));
+                transitionEntity.setSapuCtxList((null == transition.getSapuCtxList() ? "false" : transition.getSapuCtxList()));
                 if (transition.getCondition() != null) {
                     transitionEntity.setConditionExpression(transition.getCondition().getExpression());
                 }
@@ -176,6 +178,8 @@ public class MachineDefinitionService {
         transition.setName(entity.getName());
         transition.setSourceStateId(entity.getSourceStateId());
         transition.setDestinationStateId(entity.getDestinationStateId());
+        transition.setSingleActionPerUser((null == entity.getSingleActionPerUser() ? "false" : entity.getSingleActionPerUser()));
+        transition.setSapuCtxList((null == entity.getSapuCtxList() ? "false" : entity.getSapuCtxList()));
         if (entity.getConditionExpression() != null) {
             transition.setCondition(new Condition(entity.getConditionExpression()));
         }

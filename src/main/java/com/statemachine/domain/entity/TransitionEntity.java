@@ -31,6 +31,12 @@ public class TransitionEntity {
 
     @Column(columnDefinition = "TEXT")
     private String conditionExpression;
+    
+    @Column(nullable = false)
+    private String singleActionPerUser;
+    
+    @Column(nullable = false)
+    private String sapuCtxList;
 
     @Column
     private String role; // Role required to use this transition

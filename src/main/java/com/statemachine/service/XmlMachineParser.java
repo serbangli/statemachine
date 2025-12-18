@@ -125,6 +125,13 @@ public class XmlMachineParser {
         String transitionName = transitionElement.hasAttribute("name") 
             ? transitionElement.getAttribute("name") 
             : transitionId;
+        String singleUserAction = transitionElement.hasAttribute("singleActionPerUser") 
+                ? transitionElement.getAttribute("singleActionPerUser") 
+                : "false";
+        String sapuCtxList = transitionElement.hasAttribute("sapuCtxList") 
+                ? transitionElement.getAttribute("sapuCtxList") 
+                : "";
+        
         
         // Handle typo in XML: "surce" should be "source"
         String source = transitionElement.hasAttribute("source") 
@@ -138,6 +145,8 @@ public class XmlMachineParser {
         transition.setName(transitionName);
         transition.setSourceStateId(source);
         transition.setDestinationStateId(destination);
+        transition.setSingleActionPerUser(singleUserAction);
+        transition.setSapuCtxList(sapuCtxList);
 
         // Parse condition if present
         NodeList conditionNodes = transitionElement.getElementsByTagName("condition");

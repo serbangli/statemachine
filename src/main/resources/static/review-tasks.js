@@ -179,9 +179,9 @@ async function addReviewer() {
     try {
         const request = {
             taskId: currentTaskId,
-            reviewerId: reviewerId,
-            reviewerName: reviewerName,
-            reviewerEmail: reviewerEmail
+            userId: reviewerId,
+            userName: reviewerName,
+            userEmail: reviewerEmail
         };
 
         const result = await apiCall(`/${currentTaskId}/reviewer`, 'POST', request);
@@ -218,9 +218,9 @@ async function submitReview() {
     try {
         const request = {
             taskId: currentTaskId,
-            reviewerId: reviewerId,
-            reviewerName: reviewerName,
-            reviewerEmail: reviewerEmail
+            userId: reviewerId,
+            userName: reviewerName,
+            userEmail: reviewerEmail
         };
 
         const result = await apiCall(`/${currentTaskId}/review`, 'POST', request);

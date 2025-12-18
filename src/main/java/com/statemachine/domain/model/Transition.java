@@ -12,6 +12,8 @@ public class Transition {
     private String name;
     private String sourceStateId;
     private String destinationStateId;
+    private String singleActionPerUser;
+    private String sapuCtxList;
     private Condition condition;
     private String role; // Role required to use this transition
 }
